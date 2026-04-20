@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Περιβόλι — Nafplio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Yeseva+One&amp;family=Lora:ital,wght@0,400;0,500;1,400;1,500&amp;display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --terracotta: #C4693A;
+      --linen: #F2EBD9;
+      --olive: #3D4A2E;
+      --umber: #2A1A0E;
+      --amber: #E8A45A;
+      --linen-dim: #E8DEC8;
+      --smoke: rgba(42,26,14,0.55);
+      --page-bg: #F0E8D3;
+      --ink: #2A1A0E;
+      --ink-mid: #5C3D22;
+      --ink-light: #9B7B5A;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--umber);
+      color: var(--linen);
+      font-family: 'Lora', Georgia, serif;
+      cursor: none;
+      overflow-x: hidden;
+    }
+
+    /* Custom cursor */
+    #cursor {
+      position: fixed;
+      width: 12px; height: 12px;
+      background: var(--terracotta);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 9999;
+      transform: translate(-50%, -50%);
+      transition: transform 0.12s ease, background 0.2s ease, width 0.2s ease, height 0.2s ease;
+    }
+    #cursor.grow {
+      width: 36px; height: 36px;
+      background: transparent;
+      border: 1.5px solid var(--amber);
+    }
+
+    /* PAGE SYSTEM */
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* PAGE TRANSITION */
+    .page.fade-in { animation: pageFadeIn 0.35s ease forwards; }
+    @keyframes pageFadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* NAV — shared */
+    nav[data-block="nav"] {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: clamp(16px, 3vw, 28px) clamp(20px, 5vw, 56px);
+    }
+    nav[data-block="nav"] .nav-logo {
+      font-family: 'Yeseva One', serif;
+      font-size: clamp(17px, 2.2vw, 22px);
+      color: var(--linen);
+      text-decoration: none;
+      letter-spacing: 0.04em;
+      cursor: none;
+    }
+    nav[data-block="nav"] .nav-links {
+      display: flex;
+      gap: clamp(18px, 3.5vw, 44px);
+      list-style: none;
+    }
+    nav[data-block="nav"] .nav-links a {
+      font-family: 'Lora', serif;
+      font-size: clamp(11px, 1.1vw, 13px);
+      color: var(--linen-dim);
+      text-decoration: none;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      transition: color 0.25s;
+      position: relative;
+      cursor: none;
+    }
+    nav[data-block="nav"] .nav-links a::after {
+      content: '';
+      position: absolute;
+      bottom: -3px; left: 0;
+      width: 0; height: 1px;
+      background: var(--amber);
+      transition: width 0.3s ease;
+    }
+    nav[data-block="nav"] .nav-links a:hover { color: var(--amber); }
+    nav[data-block="nav"] .nav-links a:hover::after { width: 100%; }
+    nav[data-block="nav"] .nav-links a.active { color: var(--amber); }
+    nav[data-block="nav"] .nav-links a.active::after { width: 100%; }
+
+    /* NAV styles per page */
+    body.page-home nav[data-block="nav"],
+    body.page-contact nav[data-block="nav"] {
+      background: linear-gradient(to bottom, rgba(42,26,14,0.82) 0%, transparent 100%);
+    }
+    body.page-menu nav[data-block="nav"] {
+      background: rgba(240,232,211,0.92);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid rgba(42,26,14,0.1);
+    }
+    body.page-menu nav[data-block="nav"] .nav-logo,
+    body.page-menu nav[data-block="nav"] .nav-links a { color: var(--ink-mid); }
+    body.page-menu nav[data-block="nav"] .nav-links a:hover { color: var(--terracotta); }
+    body.page-menu nav[data-block="nav"] .nav-links a.active { color: var(--terracotta); }
+    body.page-menu nav[data-block="nav"] .nav-links a::after { background: var(--terracotta); }
+    body.page-menu nav[data-block="nav"] .nav-hamburger span { background: var(--ink); }
+
+    /* Mobile nav */
+    .nav-hamburger {
+      display: none; flex-direction: column;
+      gap: 5px; background: none; border: none;
+      cursor: none; padding: 4px;
+    }
+    .nav-hamburger span {
+      display: block; width: 24px; height: 1.5px;
+      background: var(--linen); transition: all 0.3s;
+    }
+    .nav-mobile-menu {
+      display: none; flex-direction: column;
+      position: fixed; top: 0; left: 0;
+      width: 100%; height: 100dvh;
+      background: var(--umber); z-index: 200;
+      justify-content: center; align-items: center;
+    }
+    .nav-mobile-menu.open { display: flex; }
+    .nav-mobile-menu a {
+      font-family: 'Yeseva One', serif;
+      font-size: clamp(32px, 8vw, 48px);
+      color: var(--linen); text-decoration: none;
+      padding: 14px 0; transition: color 0.25s; cursor: none;
+    }
+    .nav-mobile-menu a:hover { color: var(--amber); }
+    .nav-mobile-close {
+      position: absolute; top: 28px; right: 28px;
+      background: none; border: none;
+      color: var(--linen-dim); font-size: 28px; cursor: none;
+    }
+    @media (max-width: 640px) {
+      nav[data-block="nav"] .nav-links { display: none; }
+      .nav-hamburger { display: flex; }
+    }
+
+    /* ===================== HOME PAGE ===================== */
+    #page-home { background: var(--umber); }
+
+    section[data-block="entrance"] {
+      position: relative; width: 100%;
+      height: 100dvh; min-height: 600px; overflow: hidden;
+    }
+    .entrance-img {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover; object-position: center 60%;
+      filter: brightness(0.62) saturate(1.1);
+      animation: os-slowzoom 18s ease-out forwards;
+    }
+    @keyframes os-slowzoom {
+      from { transform: scale(1.06); } to { transform: scale(1.0); }
+    }
+    .entrance-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(160deg, rgba(42,26,14,0.18) 0%, rgba(42,26,14,0.0) 40%, rgba(42,26,14,0.65) 100%);
+    }
+    .entrance-content {
+      position: absolute;
+      bottom: clamp(48px, 9vh, 100px);
+      left: clamp(24px, 7vw, 88px);
+      max-width: min(680px, 90vw);
+    }
+    .entrance-eyebrow {
+      font-family: 'Lora', serif; font-size: clamp(11px, 1.1vw, 13px);
+      letter-spacing: 0.22em; text-transform: uppercase; color: var(--amber);
+      opacity: 0; animation: os-fadein 1s 0.4s ease forwards;
+      display: block; margin-bottom: 14px;
+    }
+    .entrance-title {
+      font-family: 'Yeseva One', serif;
+      font-size: clamp(56px, 11vw, 128px);
+      line-height: 0.92; color: var(--linen); letter-spacing: -0.01em;
+      opacity: 0; animation: os-risein 1s 0.65s cubic-bezier(0.22,1,0.36,1) forwards;
+      margin-bottom: 4px;
+    }
+    .entrance-subtitle-greek {
+      font-family: 'Lora', serif; font-style: italic;
+      font-size: clamp(13px, 1.6vw, 18px); color: var(--linen-dim);
+      letter-spacing: 0.06em; opacity: 0;
+      animation: os-fadein 1s 1s ease forwards;
+      margin-bottom: clamp(22px, 4vh, 40px); display: block;
+    }
+    .entrance-line {
+      font-family: 'Lora', serif; font-style: italic;
+      font-size: clamp(15px, 1.8vw, 21px); color: var(--linen);
+      line-height: 1.5; max-width: 420px; opacity: 0;
+      animation: os-fadein 1s 1.2s ease forwards;
+      margin-bottom: clamp(28px, 5vh, 48px);
+    }
+    .entrance-cta {
+      display: inline-block; font-family: 'Lora', serif;
+      font-size: clamp(12px, 1.2vw, 14px); letter-spacing: 0.18em;
+      text-transform: uppercase; color: var(--linen); text-decoration: none;
+      border-bottom: 1px solid var(--terracotta); padding-bottom: 4px;
+      opacity: 0; animation: os-fadein 1s 1.5s ease forwards;
+      transition: color 0.25s, border-color 0.25s; cursor: none;
+    }
+    .entrance-cta:hover { color: var(--amber); border-color: var(--amber); }
+
+    section[data-block="season"] {
+      background: var(--olive);
+      padding: clamp(32px, 6vw, 64px) clamp(24px, 7vw, 88px);
+      display: flex; flex-wrap: wrap;
+      gap: clamp(24px, 4vw, 56px);
+      align-items: flex-start; justify-content: space-between;
+    }
+    .season-label {
+      font-family: 'Lora', serif; font-size: clamp(10px, 0.9vw, 12px);
+      letter-spacing: 0.2em; text-transform: uppercase; color: var(--amber);
+      margin-bottom: 14px; display: block;
+    }
+    .season-heading {
+      font-family: 'Yeseva One', serif;
+      font-size: clamp(28px, 4.5vw, 52px);
+      color: var(--linen); line-height: 1.05; max-width: 420px;
+    }
+    .season-body {
+      font-family: 'Lora', serif; font-size: clamp(14px, 1.3vw, 16px);
+      color: var(--linen-dim); line-height: 1.75; max-width: 480px;
+      flex: 1 1 300px; padding-top: 8px;
+    }
+    .season-left { flex: 1 1 280px; }
+
+    section[data-block="photopair"] {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 3px; background: var(--umber);
+    }
+    .photo-cell { overflow: hidden; position: relative; }
+    .photo-cell img {
+      width: 100%; height: clamp(260px, 40vw, 520px);
+      object-fit: cover; display: block;
+      filter: brightness(0.78) saturate(0.95);
+      transition: transform 0.7s ease, filter 0.5s ease;
+    }
+    .photo-cell:hover img { transform: scale(1.04); filter: brightness(0.88) saturate(1.05); }
+    .photo-caption {
+      position: absolute; bottom: 20px; left: 22px;
+      font-family: 'Lora', serif; font-style: italic;
+      font-size: clamp(12px, 1.1vw, 14px); color: var(--linen-dim); letter-spacing: 0.08em;
+    }
+
+    section[data-block="ethos"] {
+      background: var(--linen); color: var(--umber);
+      padding: clamp(56px, 10vw, 110px) clamp(24px, 7vw, 88px);
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: clamp(32px, 5vw, 64px); align-items: start;
+    }
+    .ethos-rule { width: 36px; height: 2px; background: var(--terracotta); margin-bottom: 20px; }
+    .ethos-head {
+      font-family: 'Yeseva One', serif;
+      font-size: clamp(22px, 3.2vw, 38px); line-height: 1.1; color: var(--umber); margin-bottom: 16px;
+    }
+    .ethos-text {
+      font-family: 'Lora', serif; font-size: clamp(14px, 1.3vw, 16px);
+      line-height: 1.8; color: #4A3323;
+    }
+    .ethos-link {
+      display: inline-block; margin-top: 28px; font-family: 'Lora', serif;
+      font-size: clamp(11px, 1vw, 13px); letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--terracotta); text-decoration: none;
+      border-bottom: 1px solid var(--terracotta); padding-bottom: 3px;
+      transition: color 0.25s; cursor: none;
+    }
+    .ethos-link:hover { color: var(--olive); border-color: var(--olive); }
+
+    /* ===================== MENU PAGE ===================== */
+    #page-menu { background: var(--page-bg); color: var(--ink); }
+
+    section[data-block="menu-header"] {
+      padding-top: clamp(100px, 14vw, 150px);
+      padding-bottom: clamp(32px, 5vw, 56px);
+      padding-left: clamp(24px, 10vw, 140px);
+      padding-right: clamp(24px, 10vw, 140px);
+      border-bottom: 1px solid rgba(42,26,14,0.12);
+    }
+    .menu-eyebrow {
+      display: block; font-family: 'Lora', serif; font-style: italic;
+      font-size: clamp(12px, 1.2vw, 15px); color: var(--terracotta);
+      letter-spacing: 0.1em; margin-bottom: 12px;
+    }
+    .menu-title {
+      font-family: 'Yeseva One', serif;
+      font-size: clamp(36px, 7vw, 84px); line-height: 0.95;
+      color: var(--ink); letter-spacing: -0.01em; margin-bottom: 20px;
+    }
+    .menu-note {
+      font-family: 'Lora', serif; font-style: italic;
+      font-size: clamp(13px, 1.3vw, 16px); color: var(--ink-light);
+      line-height: 1.7; max-width: 520px;
+    }
+
+    section[data-block="act"] {
+      padding: clamp(48px, 8vw, 96px) clamp(24px, 10vw, 140px);
+      border-bottom: 1px solid rgba(42,26,14,0.1);
+    }
+    #page-menu section[data-block="act"]:nth-child(odd) { background: var(--page-bg); }
+    #page-menu section[data-block="act"]:nth-child(even) { background: #EAE0C8; }
+
+    .act-header {
+      display: flex; flex-wrap: wrap; align-items: baseline;
+      gap: 16px; margin-bottom: clamp(36px, 6vw, 64px);
+    }
+    .act-number {
+      font-family: 'Lora', serif; font-style: italic;
+      font-size: clamp(11px, 1vw, 13px); color: var(--terracotta);
+      letter-spacing: 0.16em; text-transform: uppercase; white-space: nowrap;
+    }
+    .act-rule { flex: 1; min-width: 40px; height: 1px; background: rgba(42,26,14,0.15); align-self: center; }
+    .act-title-greek {
+      font-family: 'Yeseva One', serif; font-size: clamp(28px, 5.5vw, 62px);
+      color: var(--ink); line-height: 1; white-space: nowrap;
+    }
+    .act-title-en {
+      font-family: 'Lora', serif; font-style: italic;
+      font-size: clamp(12px, 1.1vw, 14px); color: var(--ink-light);
+      letter-spacing: 0.08em; align-self: flex-end; white-space: nowrap;
+    }
+
+    .dish {
+      display: grid; grid-template-columns: 1fr auto;
+      gap: 12px 24px; padding: clamp(18px, 2.5vw, 26px) 0;
+      border-bottom: 1px solid rgba(42,26,14,0.08); align-items: start;
+    }
+    .dish:last-child { border-bottom: none; }
+    .dish-name {
+      font-family: 'Yeseva One', serif; font-size: clamp(17px, 2.2vw, 24px);
+      color: var(--ink); line-height: 1.15; margin-bottom: 6px;
+    }
+    .dish-desc {
+      font-family: 'Lora', serif; font-style: italic;
+      font-size: clamp(13px, 1.2vw, 15px); color: var(--ink-mid);
+      line-height: 1.65; max-width: 540px;
+    }
+    .dish-price {
+      font-family: 'Lora', serif; font-size: clamp(14px, 1.3vw, 16px);
+      color: var(--terracotta); letter-spacing: 0.04em; white-space: nowrap; padding-top: 4px;
+    }
+    .dish-tag {
+      display: inline-block; font-family: 'Lora', serif; font-size: 10px;
+      letter-spacing: 0.14em; text-transform: uppercase; color: var(--olive);
+      border: 1px solid var(--olive); padding: 2px 7px; margin-top: 8px; opacity: 0.7;
+    }
+
+    section[data-block="wine-note"] {
+      background: var(--olive);
+      padding: clamp(40px, 7vw, 80px) clamp(24px, 10vw, 140px);
+      display: flex; flex-wrap: wrap;
+      gap: clamp(24px, 4vw, 56px);
+      align-items: center; justify-content: space-between;
+    }
+    .wine-label {
+      font-family: 'Lora', serif; font-size: clamp(10px, 0.9vw, 12px);
+      letter-spacing: 0.2em; text-transform: uppercase; color: var(--amber);
+      display: block; margin-bottom: 12px;
+    }
+    .wine-heading {
+      font-family: 'Yeseva One', serif; font-size: clamp(24px, 4vw, 44px);
+      color: var(--linen); line-height: 1.1; max-width: 380px;
+    }
+    .wine-body {
+      font-family: 'Lora', serif; font-style: italic;
+      font-size: clamp(14px, 1.3vw, 16px); color: var(--linen-dim);
+      line-height: 1.75; max-width: 440px; flex: 1 1 280px;
+    }
+    .wine-left { flex: 1 1 240px; }
+
+    /* ===================== CONTACT PAGE ===================== */
+    #page-contact { background: var(--umber); }
+
+    section[data-block="contact-photo"] {
+      position: relative; width: 100%;
+      height: clamp(320px, 55vw, 600px); overflow: hidden;
+    }
+    .contact-hero-img {
+      width: 100%; height: 100%;
+      object-fit: cover; object-position: center 55%;
+      filter: brightness(0.58) saturate(1.05);
+      animation: os-slowzoom 20s ease-out forwards;
+    }
+    .contact-photo-text {
+      position: absolute;
+      bottom: clamp(24px, 5vw, 48px);
+      left: clamp(24px, 7vw, 72px);
+    }
+    .contact-photo-eyebrow {
+      display: block; font-family: 'Lora', serif; font-style: italic;
+      font-size: clamp(11px, 1vw, 13px); color: var(--amber);
+      letter-spacing: 0.14em; margin-bottom: 10px;
+      opacity: 0; animation: os-fadein 1s 0.5s ease forwards;
+    }
+    .contact-photo-heading {
+      font-family: 'Yeseva One', serif;
+      font-size: clamp(32px, 6.5vw, 76px); color: var(--linen); line-height: 0.95;
+      opacity: 0; animation: os-risein 1s 0.7s cubic-bezier(0.22,1,0.36,1) forwards;
+    }
+
+    section[data-block="contact-main"] {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+      background: var(--umber);
+    }
+    .contact-address {
+      padding: clamp(44px,7vw,80px) clamp(28px,5vw,64px);
+      border-right: 1px solid rgba(242,235,217,0.09);
+      border-bottom: 1px solid rgba(242,235,217,0.09);
+    }
+    .contact-section-label {
+      display: block; font-family: 'Lora', serif;
+      font-size: clamp(10px,0.85vw,11px); letter-spacing: 0.24em;
+      text-transform: uppercase; color: var(--terracotta); margin-bottom: 20px;
+    }
+    .address-line {
+      font-family: 'Yeseva One', serif; font-size: clamp(22px,3.8vw,42px);
+      line-height: 1.1; color: var(--linen); display: block;
+    }
+    .address-line-small {
+      font-family: 'Lora', serif; font-style: italic;
+      font-size: clamp(14px,1.4vw,17px); color: var(--linen-dim);
+      display: block; margin-top: 12px; line-height: 1.6;
+    }
+    .address-note {
+      font-family: 'Lora', serif; font-style: italic;
+      font-size: clamp(12px,1.1vw,14px); color: rgba(242,235,217,0.45);
+      margin-top: 20px; display: block; line-height: 1.6;
+    }
+    .contact-phone {
+      padding: clamp(44px,7vw,80px) clamp(28px,5vw,64px);
+      border-bottom: 1px solid rgba(242,235,217,0.09);
+    }
+    .phone-number {
+      font-family: 'Yeseva One', serif; font-size: clamp(32px,5vw,56px);
+      color: var(--linen); line-height: 1; text-decoration: none;
+      display: block; transition: color 0.25s; letter-spacing: -0.01em; cursor: none;
+    }
+    .phone-number:hover { color: var(--amber); }
+    .phone-sub {
+      font-family: 'Lora', serif; font-style: italic;
+      font-size: clamp(13px,1.2vw,15px); color: rgba(242,235,217,0.5);
+      margin-top: 10px; display: block;
+    }
+    .contact-hours {
+      padding: clamp(44px,7vw,80px) clamp(28px,5vw,64px);
+      border-right: 1px solid rgba(242,235,217,0.09);
+    }
+    .hours-list { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+    .hours-list li { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; }
+    .hours-day { font-family: 'Lora', serif; font-size: clamp(14px,1.3vw,16px); color: var(--linen-dim); min-width: 100px; }
+    .hours-time { font-family: 'Lora', serif; font-style: italic; font-size: clamp(14px,1.3vw,16px); color: var(--amber); text-align: right; }
+    .hours-closed { font-family: 'Lora', serif; font-style: italic; font-size: clamp(13px,1.2vw,15px); color: rgba(242,235,217,0.3); text-align: right; }
+    .hours-rule { width: 100%; height: 1px; background: rgba(242,235,217,0.08); margin: 6px 0; }
+    .contact-reservation {
+      padding: clamp(44px,7vw,80px) clamp(28px,5vw,64px);
+      background: rgba(196,105,58,0.12);
+    }
+    .reservation-heading {
+      font-family: 'Yeseva One', serif; font-size: clamp(24px,3.5vw,38px);
+      color: var(--linen); line-height: 1.1; margin-bottom: 20px;
+    }
+    .reservation-body {
+      font-family: 'Lora', serif; font-style: italic;
+      font-size: clamp(14px,1.3vw,16px); color: var(--linen-dim);
+      line-height: 1.8; margin-bottom: 28px;
+    }
+    .reservation-cta {
+      display: inline-block; font-family: 'Lora', serif;
+      font-size: clamp(12px,1.1vw,13px); letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--linen); text-decoration: none;
+      border-bottom: 1px solid var(--terracotta); padding-bottom: 4px;
+      transition: color 0.25s, border-color 0.25s; cursor: none;
+    }
+    .reservation-cta:hover { color: var(--amber); border-color: var(--amber); }
+
+    section[data-block="directions"] {
+      background: var(--olive);
+      padding: clamp(40px,7vw,72px) clamp(24px,7vw,88px);
+      display: flex; flex-wrap: wrap;
+      gap: clamp(28px,5vw,64px); align-items: flex-start;
+    }
+    .dir-label {
+      font-family: 'Lora', serif; font-size: clamp(10px,0.85vw,11px);
+      letter-spacing: 0.22em; text-transform: uppercase; color: var(--amber);
+      display: block; margin-bottom: 14px;
+    }
+    .dir-heading {
+      font-family: 'Yeseva One', serif; font-size: clamp(24px,3.8vw,40px);
+      color: var(--linen); line-height: 1.05; margin-bottom: 20px;
+    }
+    .dir-body {
+      font-family: 'Lora', serif; font-size: clamp(14px,1.3vw,16px);
+      color: var(--linen-dim); line-height: 1.8; max-width: 340px; flex: 1 1 260px;
+    }
+    .dir-left { flex: 1 1 260px; }
+
+    section[data-block="closing"] {
+      padding: clamp(56px,9vw,100px) clamp(24px,10vw,140px);
+      background: var(--umber); text-align: center;
+    }
+    .closing-quote {
+      font-family: 'Yeseva One', serif; font-size: clamp(22px,4vw,46px);
+      color: var(--linen); line-height: 1.2; max-width: 680px; margin: 0 auto 20px;
+    }
+    .closing-attr {
+      font-family: 'Lora', serif; font-style: italic;
+      font-size: clamp(12px,1.1vw,14px); color: rgba(242,235,217,0.4); letter-spacing: 0.1em;
+    }
+    .closing-divider { width: 40px; height: 1px; background: var(--terracotta); margin: 20px auto; }
+
+    /* ===================== SHARED ===================== */
+    footer[data-block="footer"] {
+      padding: clamp(32px, 5vw, 56px) clamp(24px, 7vw, 88px);
+      display: flex; flex-wrap: wrap; gap: 20px;
+      align-items: center; justify-content: space-between;
+    }
+    #page-home footer[data-block="footer"],
+    #page-contact footer[data-block="footer"] { background: var(--umber); border-top: 1px solid rgba(242,235,217,0.1); }
+    #page-menu footer[data-block="footer"] { background: var(--umber); border-top: 1px solid rgba(242,235,217,0.08); }
+    #page-contact footer[data-block="footer"] { background: #1A0E06; border-top: 1px solid rgba(242,235,217,0.06); }
+
+    .footer-name {
+      font-family: 'Yeseva One', serif; font-size: clamp(14px, 1.6vw, 18px); color: var(--linen-dim);
+    }
+    .footer-note {
+      font-family: 'Lora', serif; font-style: italic;
+      font-size: clamp(11px, 1vw, 13px); color: rgba(242,235,217,0.45); letter-spacing: 0.05em;
+    }
+    .footer-links { display: flex; gap: 24px; list-style: none; flex-wrap: wrap; }
+    .footer-links a {
+      font-family: 'Lora', serif; font-size: clamp(11px,1vw,13px);
+      color: rgba(242,235,217,0.35); text-decoration: none;
+      letter-spacing: 0.1em; text-transform: uppercase; transition: color 0.25s; cursor: none;
+    }
+    .footer-links a:hover { color: var(--amber); }
+
+    .reveal { opacity: 0; transform: translateY(20px); transition: opacity 0.85s ease, transform 0.85s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    @keyframes os-fadein { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes os-risein { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body class="page-contact">
+
+<div id="cursor" class="" style="left: 1291px; top: 10px;"></div>
+
+<!-- MOBILE MENU OVERLAY -->
+<div class="nav-mobile-menu" id="mobileMenu">
+  <button class="nav-mobile-close" id="closeMenu" aria-label="Close menu">✕</button>
+  <a href="#" data-page="home">Home</a>
+  <a href="#" data-page="menu" class="">Menu</a>
+  <a href="#" data-page="contact" class="active">Find Us</a>
+</div>
+
+<!-- NAV -->
+<nav data-block="nav">
+  <a href="#" class="nav-logo" data-page="home">Περιβόλι</a>
+  <ul class="nav-links">
+    <li><a href="#" data-page="home" class="">Home</a></li>
+    <li><a href="#" data-page="menu" class="">Menu</a></li>
+    <li><a href="#" data-page="contact" class="active">Find Us</a></li>
+  </ul>
+  <button class="nav-hamburger" id="openMenu" aria-label="Open menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<!-- ==================== HOME PAGE ==================== -->
+<div id="page-home" class="page">
+
+  <section data-block="entrance">
+    <img class="entrance-img" src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=1600&amp;q=85" alt="A warm courtyard at dusk" loading="eager">
+    <div class="entrance-overlay"></div>
+    <div class="entrance-content">
+      <span class="entrance-eyebrow">Ναύπλιο · Since 1987</span>
+      <h1 class="entrance-title">Περιβόλι</h1>
+      <span class="entrance-subtitle-greek">the garden</span>
+      <p class="entrance-line">Evening falls slowly in this courtyard. The lamb has been in the oven since noon.</p>
+      <a href="#" class="entrance-cta" data-page="menu">See what we cook</a>
+    </div>
+  </section>
+
+  <section data-block="season">
+    <div class="season-left">
+      <span class="season-label">This season</span>
+      <h2 class="season-heading">A table under the lemon tree</h2>
+    </div>
+    <p class="season-body">
+      We open at seven and close when the last guest wants to leave. There is no rush here — only the sound of the courtyard, a carafe of wine from Nemea, and food that takes all day to make. The garden has been in the family since before we had a sign on the door.
+    </p>
+  </section>
+
+  <section data-block="photopair">
+    <div class="photo-cell">
+      <img src="https://images.unsplash.com/photo-1559181567-c3190688dc44?w=900&amp;q=80" alt="Slow-cooked lamb on a wooden table" loading="lazy">
+      <span class="photo-caption">Slow-cooked lamb shoulder</span>
+    </div>
+    <div class="photo-cell">
+      <img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=900&amp;q=80" alt="Wine glasses and candlelight" loading="lazy">
+      <span class="photo-caption">Local wine from Nemea</span>
+    </div>
+  </section>
+
+  <section data-block="ethos">
+    <div style="opacity: 0; transform: translateY(28px); transition: opacity 0.9s, transform 0.9s;">
+      <div class="ethos-rule"></div>
+      <h2 class="ethos-head">Three generations in one kitchen</h2>
+      <p class="ethos-text">Yiayia Eleftheria's pastitsio still opens the week. Her daughter changed nothing. Her granddaughter, Zoe, added one dish: a pasta made by hand each afternoon from flour, egg, and whatever the market had. That is the whole of our philosophy.</p>
+      <a href="#" class="ethos-link" data-page="menu">Read the menu</a>
+    </div>
+    <div style="opacity: 0; transform: translateY(28px); transition: opacity 0.9s, transform 0.9s;">
+      <div class="ethos-rule"></div>
+      <h2 class="ethos-head">Open evenings, always</h2>
+      <p class="ethos-text">We are open Tuesday through Sunday, from 7pm until the last person finishes their dessert wine. We do not take reservations more than one week in advance — the garden has only twelve tables, and we like it that way.</p>
+      <a href="#" class="ethos-link active" data-page="contact">How to find us</a>
+    </div>
+  </section>
+
+  <footer data-block="footer">
+    <span class="footer-name">Περιβόλι — Nafplio</span>
+    <span class="footer-note">Open evenings · Tuesday – Sunday</span>
+  </footer>
+
+</div><!-- /page-home -->
+
+<!-- ==================== MENU PAGE ==================== -->
+<div id="page-menu" class="page">
+
+  <section data-block="menu-header">
+    <span class="menu-eyebrow">Spring · Summer 2025</span>
+    <h1 class="menu-title">What we cook</h1>
+    <p class="menu-note">Everything changes with the season, with the market, with what the fishermen brought in. These are the dishes that are here right now. Prices include bread and olives to start.</p>
+  </section>
+
+  <!-- ACT I -->
+  <section data-block="act">
+    <div class="act-header">
+      <span class="act-number">Act I</span>
+      <div class="act-rule"></div>
+      <h2 class="act-title-greek">Να αρχίσουμε</h2>
+      <span class="act-title-en">To Begin</span>
+    </div>
+    <div class="dish reveal visible"><div><h3 class="dish-name">Tzatziki της μαμάς</h3><p class="dish-desc">Our grandmother's tzatziki: strained yogurt, garlic that has been resting in olive oil all day, cucumber pressed dry, and dill picked from the pot by the door. Nothing from a jar.</p></div><span class="dish-price">5 €</span></div>
+    <div class="dish reveal visible"><div><h3 class="dish-name">Ταραμοσαλάτα</h3><p class="dish-desc">Cured grey mullet roe beaten with yesterday's bread, lemon, and oil until it holds. Pale pink, dense, a little salty — the kind that makes you ask for more bread.</p></div><span class="dish-price">6 €</span></div>
+    <div class="dish reveal visible"><div><h3 class="dish-name">Φέτα στο φούρνο</h3><p class="dish-desc">A whole block of feta, still in its paper, baked with cherry tomatoes and green peppers and a small fire of dried oregano. Brought to the table in the tin it cooked in.</p><span class="dish-tag">Serves two</span></div><span class="dish-price">9 €</span></div>
+    <div class="dish reveal visible"><div><h3 class="dish-name">Σαλάτα χωριάτικη</h3><p class="dish-desc">Tomatoes from the Argolid plain, Kalamata olives, white onion, green pepper, capers, and a slab of feta. Dressed only with oil and a little salt. Nothing more is needed.</p></div><span class="dish-price">8 €</span></div>
+    <div class="dish reveal visible"><div><h3 class="dish-name">Κεφτεδάκια</h3><p class="dish-desc">Pork meatballs with spearmint, onion, and a little allspice — the old recipe, not the taverna shortcut. Pan-fried in olive oil, served warm with a wedge of lemon.</p></div><span class="dish-price">8 €</span></div>
+  </section>
+
+  <section data-block="wine-note">
+    <div class="wine-left"><span class="wine-label">The cellar</span><h2 class="wine-heading">Wine from the Nemea valley, ten kilometres away</h2></div>
+    <p class="wine-body">We pour from three producers — all within a short drive. The Agiorgitiko grape of Nemea is deep, soft, and smells faintly of dried figs. Ask for the carafe. It is always the right decision.</p>
+  </section>
+
+  <!-- ACT II -->
+  <section data-block="act">
+    <div class="act-header">
+      <span class="act-number">Act II</span>
+      <div class="act-rule"></div>
+      <h2 class="act-title-greek">Το κυρίως</h2>
+      <span class="act-title-en">The Heart of It</span>
+    </div>
+    <div class="dish reveal visible"><div><h3 class="dish-name">Αρνί κλέφτικο</h3><p class="dish-desc">Lamb shoulder sealed in parchment with rosemary, garlic, and lemon peel, slow-cooked from noon until evening. It falls from the bone. We make six portions a night and that is all there is.</p><span class="dish-tag">Slow-cooked · Limited</span></div><span class="dish-price">19 €</span></div>
+    <div class="dish reveal visible"><div><h3 class="dish-name">Χειροποίητα ζυμαρικά</h3><p class="dish-desc">Zoe's pasta, rolled by hand each afternoon, cut wide and rough, with a sauce of sautéed wild greens, a little butter, and aged Graviera grated over the top at the table.</p><span class="dish-tag">Handmade daily</span></div><span class="dish-price">16 €</span></div>
+    <div class="dish reveal visible"><div><h3 class="dish-name">Μπακαλιάρος</h3><p class="dish-desc">Salt cod soaked for two days, then fried in a light batter until the outside shatters. Served with skordalia — a thick paste of potato and garlic that is more honest than polite.</p></div><span class="dish-price">17 €</span></div>
+    <div class="dish reveal visible"><div><h3 class="dish-name">Παστίτσιο της γιαγιάς</h3><p class="dish-desc">The original recipe: thick tubular pasta layered with spiced ground beef, a béchamel that sets firm enough to cut with a knife, and thirty minutes more in the oven than is strictly necessary.</p><span class="dish-tag">Tuesday &amp; Wednesday only</span></div><span class="dish-price">14 €</span></div>
+    <div class="dish reveal visible"><div><h3 class="dish-name">Ψητό κοτόπουλο</h3><p class="dish-desc">Half a village chicken, marinated overnight in lemon, garlic, and dried thyme, then roasted over charcoal. The skin is the point. Served with roasted potatoes that cooked in the same pan.</p></div><span class="dish-price">15 €</span></div>
+    <div class="dish reveal visible"><div><h3 class="dish-name">Μουσακάς</h3><p class="dish-desc">Layers of aubergine, potato, and seasoned ground lamb, with a top of béchamel gone gold. It needs rest after baking — ours rests for an hour before we serve it. That patience is the whole recipe.</p></div><span class="dish-price">15 €</span></div>
+  </section>
+
+  <!-- ACT III -->
+  <section data-block="act">
+    <div class="act-header">
+      <span class="act-number">Act III</span>
+      <div class="act-rule"></div>
+      <h2 class="act-title-greek">Τα γλυκά</h2>
+      <span class="act-title-en">The Sweet End</span>
+    </div>
+    <div class="dish reveal visible"><div><h3 class="dish-name">Κρέμα λεμόνι</h3><p class="dish-desc">A set cream of lemon juice, eggs, and good butter, made each morning and chilled until it trembles. We serve it in a ceramic bowl with a spoon of thyme honey on the side.</p></div><span class="dish-price">6 €</span></div>
+    <div class="dish reveal visible"><div><h3 class="dish-name">Γαλακτομπούρεκο</h3><p class="dish-desc">Crisp filo around a semolina cream set with vanilla and lemon, soaked after baking in a thin syrup of orange blossom water. The pastry stays crisp for exactly twenty minutes — we time it.</p></div><span class="dish-price">5 €</span></div>
+    <div class="dish reveal visible"><div><h3 class="dish-name">Φρούτα του κήπου</h3><p class="dish-desc">Seasonal fruit from the garden and the market: in summer, peaches in wine syrup; in autumn, figs with walnuts and honey; in winter, oranges with cinnamon. Ask what is today's.</p></div><span class="dish-price">5 €</span></div>
+    <div class="dish reveal visible"><div><h3 class="dish-name">Λουκουμάδες</h3><p class="dish-desc">Small fried dough balls, made to order, served in a heap with a drizzle of dark Cretan honey and a dusting of cinnamon. The kind of thing you order thinking you will share them.</p></div><span class="dish-price">5 €</span></div>
+    <div class="dish reveal visible"><div><h3 class="dish-name">Γλυκό κουταλιού</h3><p class="dish-desc">A spoon sweet from the family's preserve jars: sour cherry in summer, walnut in winter, quince in spring. Served with cold water and a small glass of mastiha liqueur. This one is on us.</p><span class="dish-tag">Complimentary</span></div><span class="dish-price">—</span></div>
+  </section>
+
+  <footer data-block="footer">
+    <span class="footer-name">Περιβόλι — Nafplio</span>
+    <span class="footer-note">Menu changes with the season · Ask about allergens</span>
+  </footer>
+
+</div><!-- /page-menu -->
+
+<!-- ==================== CONTACT PAGE ==================== -->
+<div id="page-contact" class="page active fade-in">
+
+  <section data-block="contact-photo">
+    <img class="contact-hero-img" src="https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=1400&amp;q=85" alt="The garden courtyard at Perivoli" loading="eager" style="">
+    <div class="contact-photo-text">
+      <span class="contact-photo-eyebrow" style="">Ναύπλιο, Αργολίδα</span>
+      <h1 class="contact-photo-heading" style="">Come find<br>the garden</h1>
+    </div>
+  </section>
+
+  <section data-block="contact-main" class="">
+    <div class="contact-address reveal visible">
+      <span class="contact-section-label">The address</span>
+      <span class="address-line">Odos Staikopoulou</span>
+      <span class="address-line">12</span>
+      <span class="address-line-small">Nafplio Old Town, 211 00<br>Argolid, Peloponnese</span>
+      <span class="address-note">In the neoclassical courtyard behind<br>the church of Agios Spyridon.<br>Look for the lemon tree.</span>
+    </div>
+    <div class="contact-phone reveal visible">
+      <span class="contact-section-label">Call us</span>
+      <a href="tel:+302752000000" class="phone-number">+30 27520<br>00 000</a>
+      <span class="phone-sub">We answer from 5pm onwards.<br>No WhatsApp. No email. Just the phone.</span>
+    </div>
+    <div class="contact-hours reveal visible">
+      <span class="contact-section-label">When we are open</span>
+      <ul class="hours-list">
+        <li><span class="hours-day">gamwthpanagia</span><span class="hours-time">7pm – late</span></li>
+        <li><span class="hours-day">Wednesday</span><span class="hours-time">7pm – late</span></li>
+        <li><span class="hours-day">Thursday</span><span class="hours-time">7pm – late</span></li>
+        <li><span class="hours-day">Friday</span><span class="hours-time">7pm – late</span></li>
+        <li><span class="hours-day">Saturday</span><span class="hours-time">7pm – late</span></li>
+        <li><span class="hours-day">Sunday</span><span class="hours-time">7pm – late</span></li>
+        <div class="hours-rule"></div>
+        <li><span class="hours-day">Monday</span><span class="hours-closed">Closed</span></li>
+      </ul>
+    </div>
+    <div class="contact-reservation reveal visible">
+      <h2 class="reservation-heading" style="width: 68%; height: 50px;">To reserve a table 
+Γαμω τη Παναγία </h2>
+      <p class="reservation-body">We have twelve tables in the garden. In summer they fill quickly — especially on Thursday through Saturday. Call us before six in the evening and we will hold a table for you. We do not take reservations through the internet, and we do not have a waiting list. If there is no space, we will tell you honestly and suggest tomorrow.</p>
+      <a href="tel:+302752000000" class="reservation-cta">Call to reserve</a>
+    </div>
+  </section>
+
+  <section data-block="directions">
+    <div class="dir-left">
+      <span class="dir-label">Getting here</span>
+      <h2 class="dir-heading">Ten minutes<br>from the waterfront</h2>
+    </div>
+    <p class="dir-body">From Syntagma Square, walk up Staikopoulou Street toward the Palamidi fortress. We are on your left, past the bookshop, in the courtyard behind the low iron gate. There is no sign on the street — only a small painted tile with our name. Parking is on Bouboulinas Street along the sea.</p>
+  </section>
+
+  <section data-block="closing">
+    <p class="closing-quote">The garden has been here longer than the sign. It will be here after we are gone.</p>
+    <div class="closing-divider"></div>
+    <span class="closing-attr">— Eleftheria Papadimitriou, founder, 1987</span>
+  </section>
+
+  <footer data-block="footer">
+    <span class="footer-name">Περιβόλι — Nafplio</span>
+    <ul class="footer-links">
+      <li><a href="#" data-page="home">Home</a></li>
+      <li><a href="#" data-page="menu" class="">Menu</a></li>
+      <li><a href="#" data-page="contact" class="active">Find Us</a></li>
+    </ul>
+  </footer>
+
+</div><!-- /page-contact -->
+
+<script>
+  // ── Custom cursor ──────────────────────────────────────────
+  const cursor = document.getElementById('cursor');
+  document.addEventListener('mousemove', e => {
+    cursor.style.left = e.clientX + 'px';
+    cursor.style.top  = e.clientY + 'px';
+  });
+  function updateCursorTargets() {
+    document.querySelectorAll('a, button').forEach(el => {
+      el.addEventListener('mouseenter', () => cursor.classList.add('grow'));
+      el.addEventListener('mouseleave', () => cursor.classList.remove('grow'));
+    });
+  }
+  updateCursorTargets();
+
+  // ── Page switching ─────────────────────────────────────────
+  function navigateTo(pageName) {
+    // hide all pages
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active', 'fade-in'));
+
+    // show target
+    const target = document.getElementById('page-' + pageName);
+    target.classList.add('active', 'fade-in');
+
+    // update body class for nav styling
+    document.body.className = 'page-' + pageName;
+
+    // update active nav link
+    document.querySelectorAll('[data-page]').forEach(a => {
+      a.classList.toggle('active', a.dataset.page === pageName);
+    });
+
+    // scroll to top
+    window.scrollTo(0, 0);
+
+    // close mobile menu if open
+    document.getElementById('mobileMenu').classList.remove('open');
+
+    // re-run reveal observer for new page
+    initReveal();
+    updateCursorTargets();
+
+    // re-trigger hero animations by re-adding elements (clone trick)
+    if (pageName === 'home') {
+      const img = target.querySelector('.entrance-img');
+      if (img) { img.style.animation = 'none'; img.offsetHeight; img.style.animation = ''; }
+      ['entrance-eyebrow','entrance-title','entrance-subtitle-greek','entrance-line','entrance-cta'].forEach(cls => {
+        const el = target.querySelector('.' + cls);
+        if (el) { el.style.animation = 'none'; el.offsetHeight; el.style.animation = ''; }
+      });
+    }
+    if (pageName === 'contact') {
+      const img = target.querySelector('.contact-hero-img');
+      if (img) { img.style.animation = 'none'; img.offsetHeight; img.style.animation = ''; }
+      ['contact-photo-eyebrow','contact-photo-heading'].forEach(cls => {
+        const el = target.querySelector('.' + cls);
+        if (el) { el.style.animation = 'none'; el.offsetHeight; el.style.animation = ''; }
+      });
+    }
+  }
+
+  // ── Intercept all data-page links ─────────────────────────
+  document.addEventListener('click', e => {
+    const link = e.target.closest('[data-page]');
+    if (!link) return;
+    e.preventDefault();
+    navigateTo(link.dataset.page);
+  });
+
+  // ── Mobile menu ────────────────────────────────────────────
+  document.getElementById('openMenu').addEventListener('click', () => {
+    document.getElementById('mobileMenu').classList.add('open');
+  });
+  document.getElementById('closeMenu').addEventListener('click', () => {
+    document.getElementById('mobileMenu').classList.remove('open');
+  });
+
+  // ── Scroll reveal ──────────────────────────────────────────
+  function initReveal() {
+    const revealObs = new IntersectionObserver((entries) => {
+      entries.forEach((e, i) => {
+        if (e.isIntersecting) {
+          setTimeout(() => e.target.classList.add('visible'), i * 60);
+          revealObs.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.page.active .reveal:not(.visible)').forEach(el => revealObs.observe(el));
+  }
+
+  // ── Ethos reveal on home ───────────────────────────────────
+  function initEthosReveal() {
+    const ethosObs = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.style.opacity = '1';
+          e.target.style.transform = 'translateY(0)';
+        }
+      });
+    }, { threshold: 0.15 });
+
+    document.querySelectorAll('section[data-block="ethos"] > div').forEach(el => {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(28px)';
+      el.style.transition = 'opacity 0.9s ease, transform 0.9s ease';
+      ethosObs.observe(el);
+    });
+  }
+
+  initReveal();
+  initEthosReveal();
+</script>
+
+
+</body></html>
